@@ -12,8 +12,6 @@ func main() {
 
 	player := coach.Train(env)
 
-	env.Reset()
-
 	score := player.Play(env)
 
 	fmt.Printf("Got score of %d (best possible score is 10)\n", score)
