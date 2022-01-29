@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 
+	"github.com/lukemassa/go-coach/examples/konamicode"
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
 func main() {
-	env := KonamiCodeEnvironment{}
+	env := konamicode.New()
 
 	player := coach.Train(env)
 
