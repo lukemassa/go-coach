@@ -45,14 +45,22 @@ func Train(env Environment) Player {
 
 	strategy := make(map[State]Distribution)
 	possibleStates := env.PossibleStates()
-	fmt.Printf("There are %d states\n", len(possibleStates))
+	fmt.Println("Strategies before training:")
 	for _, state := range possibleStates {
 		// Every strategy starts out with an even distributions over
 		// its possible actions
 		strategy[state] = initialDistribution(env.PossibleActions(state))
-		fmt.Printf("Strategy for %v is %v\n", state, strategy[state])
+		fmt.Printf("  %v is %v\n", state, strategy[state])
 	}
-	// TODO: Train :)
+	// TODO: Train :
+
+	fmt.Println("Strategies after training:")
+	for _, state := range possibleStates {
+		// Every strategy starts out with an even distributions over
+		// its possible actions
+		fmt.Printf("  %v is %v\n", state, strategy[state])
+	}
+
 	return Player{
 		strategy: strategy,
 	}
