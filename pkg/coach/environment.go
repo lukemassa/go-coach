@@ -1,24 +1,20 @@
 package coach
 
-type ActionIndex int
+type Action interface{}
 
-type StateIndex int
+type State interface{}
 
-type Reward float64
+type Reward int
 
 type Environment interface {
-	Reset()
 	// What does the environment look like
-	InitialState() StateIndex
-	PossibleActions() int
-	PossibleStates() int
+	//Reset()
+	InitialState() State
+	PossibleActions(State) []Action
+	PossibleStates() []State
 
 	// Training
-	Evaluate(ActionIndex) Reward
-	Take(ActionIndex)
-	CurrentState() StateIndex
-
-	// Playing
-	IsComplete() bool
-	Score() int
+	Evaluate(State, Action) Reward
+	Take(State, Action) State
+	IsComplete(State) bool
 }
