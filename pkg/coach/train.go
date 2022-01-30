@@ -16,23 +16,8 @@ func initialDistribution(actions []Action) Distribution {
 
 	probability := 1.0 / float64(len(actions))
 
-	hasRight := false
 	for _, action := range actions {
-		actionString := fmt.Sprintf("%v", action)
-		if actionString == "0" {
-			hasRight = true
-		}
 		ret[action] = probability
-	}
-	if hasRight {
-		for _, action := range actions {
-			actionString := fmt.Sprintf("%v", action)
-			if actionString == "0" {
-				ret[action] = 1
-			} else {
-				ret[action] = 0
-			}
-		}
 	}
 	return ret
 }
