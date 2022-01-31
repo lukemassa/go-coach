@@ -13,21 +13,13 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	env := deeplizard.New()
 
-	player := coach.Train(env, 0)
+	player := coach.Train(env, 10000)
 
-	trials := 10000
+	trials := 1
 
 	start := time.Now()
 	score := player.Evaluate(env, trials)
 	duration := time.Since(start)
 
-	fmt.Printf("Evaluated untrained player: Ran %d trials in %v, got average score of %f\n", trials, duration, score)
-
-	player = coach.Train(env, 100)
-
-	start = time.Now()
-	score = player.Evaluate(env, trials)
-	duration = time.Since(start)
-
-	fmt.Printf("Evaluated trained player: Ran %d trials in %v, got average score of %f\n", trials, duration, score)
+	fmt.Printf("Ran %d trials in %v, got average score of %f\n", trials, duration, score)
 }

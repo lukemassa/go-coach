@@ -65,11 +65,13 @@ func initialQRow(actions []Action) map[Action]QValue {
 }
 
 func (q QTable) Update(state State, env Environment, learningRate, discountFactor float64) {
-	for action, _ := range q[state] {
-		// Passing epsilon as 1 to make sure we pick the value itself
-		optimalFutureAction := q.Choose(state, 1)
-		optimalFutureValue := float64(q[state][optimalFutureAction])
-		_, reward := env.Evaluate(state, action)
+	for action := range q[state] {
+
+		newState, reward := env.Evaluate(state, action)
+		// Passing epsilon as 0 to make sure we pick the value itself
+		optimalFutureAction := q.Choose(newState, 0)
+		optimalFutureValue := float64(q[newState][optimalFutureAction])
+
 		q[state][action] = QValue(1-learningRate)*q[state][action] + QValue(learningRate)*(QValue(reward)+QValue(discountFactor*optimalFutureValue))
 	}
 }
@@ -86,12 +88,15 @@ func Train(env Environment, episodes int) Player {
 		qtable[state] = initialQRow(env.PossibleActions(state))
 	}
 	fmt.Printf("%s\n", qtable)
-	learningRate := .7
+	learningRate := .9
 	discountFactor := .9
 	epsilon := .99
+	decay := .0000000000001
 	for i := 0; i < episodes; i++ {
+		// Decay the learning
+		learningRate = learningRate / (1 + decay*float64(i))
+		//fmt.Printf("Learning rate is now %f\n", learningRate)
 		state := env.InitialState()
-		//fmt.Printf("Working on episode %d\n", i)
 		for {
 			qtable.Update(state, env, discountFactor, learningRate)
 			preferredAction := qtable.Choose(state, epsilon)
@@ -104,7 +109,6 @@ func Train(env Environment, episodes int) Player {
 		}
 
 	}
-	// TODO: Train
 	fmt.Printf("%s\n", qtable)
 
 	return Player{
@@ -118,15 +122,18 @@ func (p *Player) Play(env Environment) Reward {
 	//env.Reset()
 	var score Reward
 	state := env.InitialState()
-	//fmt.Printf("Strategy %v\n", p.strategy)
+	maxSteps := env.MaxSteps()
+	steps := 0
 	for {
-
-		preferredAction := p.strategy.Choose(state, 0)
+		steps += 1
+		if steps > maxSteps {
+			break
+		}
+		preferredAction := p.strategy.Choose(state, .1)
+		//fmt.Printf("Preferred action for state %v is %v\n", state, preferredAction)
 		newState, incrementalReward := env.Evaluate(state, preferredAction)
 		score += incrementalReward
 		state = newState
-
-		//fmt.Printf("Preferred action is %v\n", preferredAction)
 
 		if env.IsComplete(state) {
 			break

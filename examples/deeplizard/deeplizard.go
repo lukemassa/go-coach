@@ -39,6 +39,22 @@ const (
 	Right
 )
 
+func (d Direction) String() string {
+	if d == Up {
+		return "Up"
+	}
+	if d == Down {
+		return "Down"
+	}
+	if d == Left {
+		return "Left"
+	}
+	if d == Right {
+		return "Right"
+	}
+	panic("wtf")
+}
+
 type Reward struct {
 	reward   int
 	terminal bool
@@ -113,6 +129,10 @@ func (k *DeepLizardEvironment) PossibleActions(currentState coach.State) []coach
 		actions = append(actions, Down)
 	}
 	return actions
+}
+
+func (k *DeepLizardEvironment) MaxSteps() int {
+	return 100
 }
 
 func (k *DeepLizardEvironment) PossibleStates() []coach.State {

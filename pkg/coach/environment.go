@@ -9,6 +9,7 @@ type Reward float64
 type Environment interface {
 	// What does the environment look like
 	//Reset()
+	MaxSteps() int
 	InitialState() State
 	PossibleActions(State) []Action
 	PossibleStates() []State
