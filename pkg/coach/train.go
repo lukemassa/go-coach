@@ -3,66 +3,112 @@ package coach
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 )
 
 type Distribution map[Action]float64
 
 type Player struct {
-	strategy map[State]Distribution
+	strategy QTable
 }
 
-func initialDistribution(actions []Action) Distribution {
-	ret := make(map[Action]float64)
+type QValue Reward
 
-	probability := 1.0 / float64(len(actions))
+type QTable map[State]map[Action]QValue
 
+func NewQTable() QTable {
+	return QTable(make(map[State]map[Action]QValue))
+}
+
+func (d QTable) Choose(state State, epsilon float64) Action {
+	// Map from Actions -> QValues
+	qrow := d[state]
+	if rand.Float64() > epsilon {
+		// Choose element w highest Q Value
+		var maxAction Action
+		for action, qvalue := range qrow {
+
+			if maxAction == nil || qrow[maxAction] < qvalue {
+				maxAction = action
+			}
+		}
+		return maxAction
+	}
+
+	options := make([]Action, 0)
+	// Loop through samples
+	for action, _ := range qrow {
+		options = append(options, action)
+	}
+	randIndex := rand.Intn(len(options))
+	return options[randIndex]
+}
+
+func (q QTable) String() string {
+	sb := strings.Builder{}
+	for state, qrow := range q {
+		sb.WriteString(fmt.Sprintf("State %v : ", state))
+		for action, qvalue := range qrow {
+			sb.WriteString(fmt.Sprintf("(%v:%v)", action, qvalue))
+		}
+		sb.WriteString("\n")
+	}
+	return sb.String()
+}
+
+func initialQRow(actions []Action) map[Action]QValue {
+	ret := make(map[Action]QValue)
 	for _, action := range actions {
-		ret[action] = probability
+		ret[action] = 0
 	}
 	return ret
 }
 
-// Sample returns an action based on the distribution
-func (d Distribution) Sample() Action {
-	val := rand.Float64()
-	inc := 0.0
-
-	// Loop through samples
-	for action, probability := range d {
-
-		inc += probability
-		if inc > val {
-			return action
-		}
-
+func (q QTable) Update(state State, env Environment, learningRate, discountFactor float64) {
+	for action, _ := range q[state] {
+		// Passing epsilon as 1 to make sure we pick the value itself
+		optimalFutureAction := q.Choose(state, 1)
+		optimalFutureValue := float64(q[state][optimalFutureAction])
+		_, reward := env.Evaluate(state, action)
+		q[state][action] = QValue(1-learningRate)*q[state][action] + QValue(learningRate)*(QValue(reward)+QValue(discountFactor*optimalFutureValue))
 	}
-	panic("UNREACHABLE CODE")
 }
 
 // Train given an environment, create a player
 // that can play well in that environment
-func Train(env Environment) Player {
+func Train(env Environment, episodes int) Player {
 
-	strategy := make(map[State]Distribution)
+	qtable := NewQTable()
 	possibleStates := env.PossibleStates()
-	fmt.Println("Strategies before training:")
 	for _, state := range possibleStates {
 		// Every strategy starts out with an even distributions over
 		// its possible actions
-		strategy[state] = initialDistribution(env.PossibleActions(state))
-		fmt.Printf("  %v is %v\n", state, strategy[state])
+		qtable[state] = initialQRow(env.PossibleActions(state))
 	}
-	// TODO: Train :
+	fmt.Printf("%s\n", qtable)
+	learningRate := .7
+	discountFactor := .9
+	epsilon := .99
+	for i := 0; i < episodes; i++ {
+		state := env.InitialState()
+		//fmt.Printf("Working on episode %d\n", i)
+		for {
+			qtable.Update(state, env, discountFactor, learningRate)
+			preferredAction := qtable.Choose(state, epsilon)
 
-	fmt.Println("Strategies after training:")
-	for _, state := range possibleStates {
-		// Every strategy starts out with an even distributions over
-		// its possible actions
-		fmt.Printf("  %v is %v\n", state, strategy[state])
+			state, _ = env.Evaluate(state, preferredAction)
+			//fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
+			if env.IsComplete(state) {
+				break
+			}
+		}
+
 	}
+	// TODO: Train
+	fmt.Printf("%s\n", qtable)
 
 	return Player{
-		strategy: strategy,
+		strategy: qtable,
 	}
 }
 
@@ -75,7 +121,7 @@ func (p *Player) Play(env Environment) Reward {
 	//fmt.Printf("Strategy %v\n", p.strategy)
 	for {
 
-		preferredAction := p.strategy[state].Sample()
+		preferredAction := p.strategy.Choose(state, 0)
 		newState, incrementalReward := env.Evaluate(state, preferredAction)
 		score += incrementalReward
 		state = newState
