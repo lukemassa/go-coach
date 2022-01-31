@@ -81,13 +81,11 @@ func (q QTable) Update(state State, env Environment, learningRate, discountFacto
 func Train(env Environment, episodes int) Player {
 
 	qtable := NewQTable()
-	possibleStates := env.PossibleStates()
-	for _, state := range possibleStates {
-		// Every strategy starts out with an even distributions over
-		// its possible actions
-		qtable[state] = initialQRow(env.PossibleActions(state))
-	}
-	fmt.Printf("%s\n", qtable)
+
+	// Fill in q state for initial state
+	state := env.InitialState()
+	qtable[state] = initialQRow(env.PossibleActions(state))
+
 	learningRate := .9
 	discountFactor := .9
 	epsilon := .99
@@ -102,7 +100,13 @@ func Train(env Environment, episodes int) Player {
 			preferredAction := qtable.Choose(state, epsilon)
 
 			state, _ = env.Evaluate(state, preferredAction)
-			//fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
+
+			// Learn about new states, initialize the q state
+			if _, ok := qtable[state]; !ok {
+				qtable[state] = initialQRow(env.PossibleActions(state))
+				//do something here
+			}
+			fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
 			if env.IsComplete(state) {
 				break
 			}
