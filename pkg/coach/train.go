@@ -76,11 +76,12 @@ func (p *Player) Play(env Environment) Reward {
 	for {
 
 		preferredAction := p.strategy[state].Sample()
-		score += env.Evaluate(state, preferredAction)
+		newState, incrementalReward := env.Evaluate(state, preferredAction)
+		score += incrementalReward
+		state = newState
 
 		//fmt.Printf("Preferred action is %v\n", preferredAction)
 
-		state = env.Take(state, preferredAction)
 		if env.IsComplete(state) {
 			break
 		}

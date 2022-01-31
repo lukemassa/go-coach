@@ -19,7 +19,7 @@ func main() {
 
 	start := time.Now()
 	score := player.Evaluate(env, 10000)
-	duration := time.Now().Sub(start)
+	duration := time.Since(start)
 
 	fmt.Printf("Ran %d trials in %v, got average score of %d\n", trials, duration, score)
 }

@@ -16,9 +16,14 @@ type Direction int
 const tials = 9
 
 /*
+c = one cricket, +1
+C = 5 crickets, +10 (and game over)
+B = Bird, -10 (and game over)
+s = start
+Empty squares are -1
     | c |   |   |
 	|   | B |   |
-    |   |   | C |
+    | s |   | C |
 */
 
 const (
@@ -118,7 +123,7 @@ func (k *DeepLizardEvironment) PossibleStates() []coach.State {
 	return states
 }
 
-func (k *DeepLizardEvironment) Take(currentState coach.State, action coach.Action) coach.State {
+func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward) {
 	state, ok := currentState.(Tile)
 	if !ok {
 		panic("State is not a tile")
@@ -153,7 +158,8 @@ func (k *DeepLizardEvironment) Take(currentState coach.State, action coach.Actio
 	}
 	newState := Tile(y_coordinate*3 + x_coordinate)
 	//.Printf("Action %v moves from %v to %v\n", action, currentState, newState)
-	return coach.State(newState)
+	tileType := k.board[newState]
+	return coach.State(newState), coach.Reward(k.rewards[tileType].reward)
 
 }
 
@@ -164,16 +170,6 @@ func (k *DeepLizardEvironment) IsComplete(currentState coach.State) bool {
 	}
 	tileType := k.board[state]
 	return k.rewards[tileType].terminal
-}
-
-func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.Action) coach.Reward {
-	newState := k.Take(currentState, action)
-	tile, ok := newState.(Tile)
-	if !ok {
-		panic("State is not a tile")
-	}
-	tileType := k.board[tile]
-	return coach.Reward(k.rewards[tileType].reward)
 }
 
 // func (k *KonamiCodeEnvironment) Take(a coach.ActionIndex) {

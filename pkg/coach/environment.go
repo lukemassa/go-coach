@@ -14,7 +14,6 @@ type Environment interface {
 	PossibleStates() []State
 
 	// Training
-	Evaluate(State, Action) Reward
-	Take(State, Action) State
+	Evaluate(State, Action) (State, Reward)
 	IsComplete(State) bool
 }
