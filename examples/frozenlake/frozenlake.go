@@ -1,9 +1,9 @@
 /*
 
-A simple game where a lizard walks around a board and tries to find crickets to eat: https://www.youtube.com/watch?v=qhRNvCVVJaA
+https://gym.openai.com/envs/FrozenLake-v0/
 
 */
-package deeplizard
+package frozenlake
 
 import (
 	"github.com/lukemassa/go-coach/pkg/coach"
@@ -13,7 +13,7 @@ type TileType int
 type Tile int
 type Direction int
 
-const tials = 9
+const tials = 16
 
 /*
 c = one cricket, +1
@@ -27,10 +27,9 @@ Empty squares are -1
 */
 
 const (
-	Empty TileType = iota
-	OneCricket
-	FiveCricket
-	Bird
+	Frozen TileType = iota
+	Hole
+	Goal
 )
 const (
 	Up Direction = iota
@@ -60,90 +59,85 @@ type Reward struct {
 	terminal bool
 }
 
-type DeepLizardEvironment struct {
+type FrozenHoleEnvironment struct {
 	board   [tials]TileType
 	rewards map[TileType]Reward
 }
 
-func New() *DeepLizardEvironment {
-	k := DeepLizardEvironment{
+func New() *FrozenHoleEnvironment {
+	f := FrozenHoleEnvironment{
 		board: [tials]TileType{
-			OneCricket,
-			Empty,
-			Empty,
-			Empty,
-			Bird,
-			Empty,
-			Empty,
-			Empty,
-			FiveCricket,
+			Frozen,
+			Frozen,
+			Frozen,
+			Frozen,
+			Frozen,
+			Hole,
+			Frozen,
+			Hole,
+			Frozen,
+			Frozen,
+			Frozen,
+			Hole,
+			Hole,
+			Frozen,
+			Frozen,
+			Goal,
 		},
 		rewards: map[TileType]Reward{
-			Empty: {
-				reward:   -1,
-				terminal: false,
-			},
-			OneCricket: {
-				reward:   1,
-				terminal: false,
-			},
-			FiveCricket: {
-				reward:   10,
+			Hole: {
+				reward:   0,
 				terminal: true,
 			},
-			Bird: {
-				reward:   -10,
+			Frozen: {
+				reward:   0,
+				terminal: false,
+			},
+			Goal: {
+				reward:   1,
 				terminal: true,
 			},
 		},
 	}
-	ret := &k
+	ret := &f
 	//ret.Reset()
 	return ret
 
 }
 
-func (k *DeepLizardEvironment) InitialState() coach.State {
-	return Tile(6) // Put the lizard in the bottom corner
+func (f *FrozenHoleEnvironment) InitialState() coach.State {
+	return Tile(0) // Put the lizard in the bottom corner
 }
 
-func (k *DeepLizardEvironment) PossibleActions(currentState coach.State) []coach.Action {
+func (f *FrozenHoleEnvironment) PossibleActions(currentState coach.State) []coach.Action {
 	actions := make([]coach.Action, 0)
 	state, ok := currentState.(Tile)
 	if !ok {
 		panic("State is not a tile")
 	}
-	x_coordinate := state % 3
-	y_coordinate := state / 3
+	x_coordinate := state % 4
+	y_coordinate := state / 4
 
 	if x_coordinate > 0 {
 		actions = append(actions, Left)
 	}
-	if x_coordinate < 2 {
+	if x_coordinate < 3 {
 		actions = append(actions, Right)
 	}
 	if y_coordinate > 0 {
 		actions = append(actions, Up)
 	}
-	if y_coordinate < 2 {
+	if y_coordinate < 3 {
 		actions = append(actions, Down)
 	}
 	return actions
 }
 
-func (k *DeepLizardEvironment) MaxSteps() int {
-	return 100
+func (f *FrozenHoleEnvironment) MaxSteps() int {
+	return 100000
 }
 
-func (k *DeepLizardEvironment) PossibleStates() []coach.State {
-	states := make([]coach.State, tials)
-	for i := 0; i < tials; i++ {
-		states[i] = Tile(i)
-	}
-	return states
-}
-
-func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward) {
+func (f *FrozenHoleEnvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward, bool) {
 	state, ok := currentState.(Tile)
 	if !ok {
 		panic("State is not a tile")
@@ -152,8 +146,8 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 	if !ok {
 		panic("Action is not a direction")
 	}
-	x_coordinate := state % 3
-	y_coordinate := state / 3
+	x_coordinate := state % 4
+	y_coordinate := state / 4
 	switch direction {
 	case Up:
 		y_coordinate--
@@ -162,7 +156,7 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 		}
 	case Down:
 		y_coordinate++
-		if y_coordinate > 2 {
+		if y_coordinate > 3 {
 			panic("Moved down when on bottom row")
 		}
 	case Left:
@@ -172,22 +166,13 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 		}
 	case Right:
 		x_coordinate++
-		if x_coordinate > 2 {
+		if x_coordinate > 3 {
 			panic("Moved right when on rightmost column")
 		}
 	}
-	newState := Tile(y_coordinate*3 + x_coordinate)
+	newState := Tile(y_coordinate*4 + x_coordinate)
 	//.Printf("Action %v moves from %v to %v\n", action, currentState, newState)
-	tileType := k.board[newState]
-	return coach.State(newState), coach.Reward(k.rewards[tileType].reward)
+	reward := f.rewards[f.board[newState]]
+	return coach.State(newState), coach.Reward(reward.reward), reward.terminal
 
-}
-
-func (k *DeepLizardEvironment) IsComplete(currentState coach.State) bool {
-	state, ok := currentState.(Tile)
-	if !ok {
-		panic("State is not a tile")
-	}
-	tileType := k.board[state]
-	return k.rewards[tileType].terminal
 }

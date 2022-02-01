@@ -13,7 +13,29 @@ import (
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
-type Key int
+type Key int8
+
+func (k Key) String() string {
+	if k == UpKey {
+		return "U"
+	}
+	if k == DownKey {
+		return "D"
+	}
+	if k == LeftKey {
+		return "L"
+	}
+	if k == RightKey {
+		return "R"
+	}
+	if k == AKey {
+		return "A"
+	}
+	if k == BKey {
+		return "B"
+	}
+	panic("Unreachable")
+}
 
 const codeLength = 10
 
@@ -22,26 +44,14 @@ const (
 	DownKey
 	LeftKey
 	RightKey
-	//AKey
-	//BKey
+	AKey
+	BKey
 )
 
-type GameState struct {
-	keys    [codeLength]Key
-	pointer int
-}
+type GameState [codeLength]Key
 
 type KonamiCodeEnvironment struct {
-	state   GameState
 	allKeys []Key
-	turn    int
-}
-
-func initialState() GameState {
-	return GameState{
-		keys:    [codeLength]Key{},
-		pointer: 0,
-	}
 }
 
 func New() *KonamiCodeEnvironment {
@@ -51,26 +61,20 @@ func New() *KonamiCodeEnvironment {
 			DownKey,
 			LeftKey,
 			RightKey,
-			//AKey,
-			//BKey,
+			AKey,
+			BKey,
 		},
-		turn:  0,
-		state: initialState(),
 	}
 	ret := &k
-	//ret.Reset()
 	return ret
 
 }
 
-// func (k *KonamiCodeEnvironment) Reset() {
-// 	keys := make([]Key, codeLength)
-// 	k.keys = keys
-// 	k.pointer = 0
-// 	k.steps = 0
-// }
+func (k *KonamiCodeEnvironment) MaxSteps() int {
+	return 100
+}
 
-func (k *KonamiCodeEnvironment) PossibleActions() []coach.Action {
+func (k *KonamiCodeEnvironment) PossibleActions(state coach.State) []coach.Action {
 	actions := make([]coach.Action, len(k.allKeys))
 	for i, key := range k.allKeys {
 		actions[i] = key
@@ -78,99 +82,77 @@ func (k *KonamiCodeEnvironment) PossibleActions() []coach.Action {
 	return actions
 }
 
-func (k *KonamiCodeEnvironment) PossibleStates() []coach.State {
-	states := make([]coach.State, 0)
-	for a1 := 0; a1 < len(k.allKeys); a1++ {
-		fmt.Printf("Working on %d\n", a1)
-		for a2 := 0; a2 < len(k.allKeys); a2++ {
-			for a3 := 0; a3 < len(k.allKeys); a3++ {
-				for a4 := 0; a4 < len(k.allKeys); a4++ {
-					for a5 := 0; a5 < len(k.allKeys); a5++ {
-						for a6 := 0; a6 < len(k.allKeys); a6++ {
-							for a7 := 0; a7 < len(k.allKeys); a7++ {
-								for a8 := 0; a8 < len(k.allKeys); a8++ {
-									for a9 := 0; a9 < len(k.allKeys); a9++ {
-										for a10 := 0; a10 < len(k.allKeys); a10++ {
-											state := GameState{
-												keys: [10]Key{
-													k.allKeys[a1],
-													k.allKeys[a2],
-													k.allKeys[a3],
-													k.allKeys[a4],
-													k.allKeys[a5],
-													k.allKeys[a6],
-													k.allKeys[a7],
-													k.allKeys[a8],
-													k.allKeys[a9],
-													k.allKeys[a10],
-												},
-												pointer: 0,
-											}
-											states = append(states, state)
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return states
+func (k *KonamiCodeEnvironment) InitialState() coach.State {
+	return GameState([codeLength]Key{})
 }
 
-// func (k *KonamiCodeEnvironment) Evaluate(a coach.ActionIndex) coach.Reward {
-// 	// TODO: Implement reward
-// 	return 0
-// }
+func (k *KonamiCodeEnvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward) {
+	currentGame, ok := currentState.(GameState)
+	if !ok {
+		panic("State is not a game")
+	}
+	newKey, ok := action.(Key)
+	if !ok {
+		panic(fmt.Sprintf("Action is not a key, it is '%v'", action))
+	}
+	// Bump one off the end
+	newGame := GameState([codeLength]Key{
+		newKey,
+		currentGame[0],
+		currentGame[1],
+		currentGame[2],
+		currentGame[3],
+		currentGame[4],
+		currentGame[5],
+		currentGame[6],
+		currentGame[7],
+		currentGame[8],
+	})
+	reward := currentRun(newGame)
+	if reward > 9 {
+		fmt.Printf("Got reward %v for %v\n", reward, newGame)
+	}
 
-// func (k *KonamiCodeEnvironment) Take(a coach.ActionIndex) {
+	return newGame, coach.Reward(reward)
+}
 
-// 	k.pointer += 1
-// 	k.steps += 1
-// 	if k.pointer == codeLength {
-// 		k.pointer = 0
-// 	}
-// 	k.keys[k.pointer] = k.allKeys[a]
+func currentRun(game GameState) int {
+	correctCode := [codeLength]Key{
+		UpKey,
+		DownKey,
+		UpKey,
+		DownKey,
+		LeftKey,
+		RightKey,
+		LeftKey,
+		RightKey,
+		AKey,
+		BKey,
+	}
+	//fmt.Printf("Looking for matches in %v\n", game)
+	for i := codeLength - 1; i >= 0; i-- {
+		matches := true
 
-// }
+		for j := 0; j <= i; j++ {
+			if correctCode[i-j] != game[j] {
+				//fmt.Printf("Sorry, %v is not %v\n", correctCode[j], game[i])
+				matches = false
+				break
+			}
+		}
+		if matches {
+			return i + 1
 
-// // How much of the code is currently done
-// func (k *KonamiCodeEnvironment) currentRun() int {
-// 	correctCode := []Key{
-// 		UpKey,
-// 		DownKey,
-// 		UpKey,
-// 		DownKey,
-// 		LeftKey,
-// 		RightKey,
-// 		LeftKey,
-// 		RightKey,
-// 		AKey,
-// 		BKey,
-// 	}
-// 	length := len(k.keys)
-// 	i := 0
-// 	for ; i < len(correctCode); i++ {
-// 		index := length - i - 1
-// 		if index < 0 {
-// 			break
-// 		}
-// 		if k.keys[index] != correctCode[i] {
-// 			break
-// 		}
+		}
+	}
+	return 0
 
-// 	}
-// 	fmt.Printf("%v has run of %d\n", k.keys, i)
-// 	return i
+}
 
-// }
-
-// func (k *KonamiCodeEnvironment) IsComplete() bool {
-// 	return k.currentRun() == 10
-// }
-
-// func (k *KonamiCodeEnvironment) Score() int {
-// 	return k.steps
-// }
+func (k *KonamiCodeEnvironment) IsComplete(currentState coach.State) bool {
+	currentGame, ok := currentState.(GameState)
+	if !ok {
+		panic("State is not a game")
+	}
+	return currentRun(currentGame) == codeLength
+}

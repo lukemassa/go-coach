@@ -17,6 +17,5 @@ type Environment interface {
 	PossibleActions(State) []Action
 
 	// Training
-	Evaluate(State, Action) (State, Reward)
-	IsComplete(State) bool
+	Evaluate(State, Action) (State, Reward, bool)
 }

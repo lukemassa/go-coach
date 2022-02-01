@@ -5,15 +5,15 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/lukemassa/go-coach/examples/deeplizard"
+	"github.com/lukemassa/go-coach/examples/frozenlake"
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	env := deeplizard.New()
+	env := frozenlake.New()
 
-	player := coach.Train(env, 10000)
+	player := coach.Train(env, 100000)
 
 	trials := 1
 

@@ -23,6 +23,10 @@ func NewQTable() QTable {
 func (d QTable) Choose(state State, epsilon float64) Action {
 	// Map from Actions -> QValues
 	qrow := d[state]
+
+	if len(qrow) == 0 {
+		panic(fmt.Sprintf("qrow has no elements for state %v", state))
+	}
 	if rand.Float64() > epsilon {
 		// Choose element w highest Q Value
 		var maxAction Action
@@ -67,8 +71,11 @@ func initialQRow(actions []Action) map[Action]QValue {
 func (q QTable) Update(state State, env Environment, learningRate, discountFactor float64) {
 	for action := range q[state] {
 
-		newState, reward := env.Evaluate(state, action)
+		newState, reward, _ := env.Evaluate(state, action)
 		// Passing epsilon as 0 to make sure we pick the value itself
+		if _, ok := q[newState]; !ok {
+			q[newState] = initialQRow(env.PossibleActions(newState))
+		}
 		optimalFutureAction := q.Choose(newState, 0)
 		optimalFutureValue := float64(q[newState][optimalFutureAction])
 
@@ -83,31 +90,39 @@ func Train(env Environment, episodes int) Player {
 	qtable := NewQTable()
 
 	// Fill in q state for initial state
-	state := env.InitialState()
-	qtable[state] = initialQRow(env.PossibleActions(state))
+	initialState := env.InitialState()
+	qtable[initialState] = initialQRow(env.PossibleActions(initialState))
+	fmt.Printf("Initial q state  %v\n", qtable)
 
 	learningRate := .9
 	discountFactor := .9
 	epsilon := .99
-	decay := .0000000000001
+	decay := .0000000001
 	for i := 0; i < episodes; i++ {
 		// Decay the learning
 		learningRate = learningRate / (1 + decay*float64(i))
-		//fmt.Printf("Learning rate is now %f\n", learningRate)
+		if i%1000 == 0 {
+			fmt.Printf("Learning rate on episode %d is now %f\n", i, learningRate)
+		}
+
 		state := env.InitialState()
-		for {
+
+		for steps := 0; ; steps++ {
+			//fmt.Printf("Updating for %v\n", state)
+
 			qtable.Update(state, env, discountFactor, learningRate)
 			preferredAction := qtable.Choose(state, epsilon)
 
-			state, _ = env.Evaluate(state, preferredAction)
+			newState, _, isComplete := env.Evaluate(state, preferredAction)
+			state = newState
 
 			// Learn about new states, initialize the q state
 			if _, ok := qtable[state]; !ok {
 				qtable[state] = initialQRow(env.PossibleActions(state))
-				//do something here
 			}
-			fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
-			if env.IsComplete(state) {
+			//fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
+			if isComplete || steps > env.MaxSteps() {
+				//fmt.Printf("Steps %d\n", steps)
 				break
 			}
 		}
@@ -126,20 +141,19 @@ func (p *Player) Play(env Environment) Reward {
 	//env.Reset()
 	var score Reward
 	state := env.InitialState()
-	maxSteps := env.MaxSteps()
+	//maxSteps := env.MaxSteps()
 	steps := 0
 	for {
 		steps += 1
-		if steps > maxSteps {
-			break
-		}
-		preferredAction := p.strategy.Choose(state, .1)
+
+		preferredAction := p.strategy.Choose(state, 0)
+		fmt.Printf("Chose action %v on step %d\n", preferredAction, steps)
 		//fmt.Printf("Preferred action for state %v is %v\n", state, preferredAction)
-		newState, incrementalReward := env.Evaluate(state, preferredAction)
+		newState, incrementalReward, isComplete := env.Evaluate(state, preferredAction)
 		score += incrementalReward
 		state = newState
 
-		if env.IsComplete(state) {
+		if isComplete {
 			break
 		}
 	}
