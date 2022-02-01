@@ -86,7 +86,7 @@ func (k *KonamiCodeEnvironment) InitialState() coach.State {
 	return GameState([codeLength]Key{})
 }
 
-func (k *KonamiCodeEnvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward) {
+func (k *KonamiCodeEnvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward, bool) {
 	currentGame, ok := currentState.(GameState)
 	if !ok {
 		panic("State is not a game")
@@ -113,7 +113,7 @@ func (k *KonamiCodeEnvironment) Evaluate(currentState coach.State, action coach.
 		fmt.Printf("Got reward %v for %v\n", reward, newGame)
 	}
 
-	return newGame, coach.Reward(reward)
+	return newGame, coach.Reward(reward), reward == codeLength
 }
 
 func currentRun(game GameState) int {
@@ -147,12 +147,4 @@ func currentRun(game GameState) int {
 	}
 	return 0
 
-}
-
-func (k *KonamiCodeEnvironment) IsComplete(currentState coach.State) bool {
-	currentGame, ok := currentState.(GameState)
-	if !ok {
-		panic("State is not a game")
-	}
-	return currentRun(currentGame) == codeLength
 }

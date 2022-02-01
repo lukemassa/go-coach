@@ -143,7 +143,7 @@ func (k *DeepLizardEvironment) PossibleStates() []coach.State {
 	return states
 }
 
-func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward) {
+func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward, bool) {
 	state, ok := currentState.(Tile)
 	if !ok {
 		panic("State is not a tile")
@@ -178,16 +178,7 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 	}
 	newState := Tile(y_coordinate*3 + x_coordinate)
 	//.Printf("Action %v moves from %v to %v\n", action, currentState, newState)
-	tileType := k.board[newState]
-	return coach.State(newState), coach.Reward(k.rewards[tileType].reward)
+	reward := k.rewards[k.board[newState]]
+	return coach.State(newState), coach.Reward(reward.reward), reward.terminal
 
-}
-
-func (k *DeepLizardEvironment) IsComplete(currentState coach.State) bool {
-	state, ok := currentState.(Tile)
-	if !ok {
-		panic("State is not a tile")
-	}
-	tileType := k.board[state]
-	return k.rewards[tileType].terminal
 }

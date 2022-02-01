@@ -128,7 +128,7 @@ func Train(env Environment, episodes int) Player {
 		}
 
 	}
-	fmt.Printf("%s\n", qtable)
+	//fmt.Printf("%s\n", qtable)
 
 	return Player{
 		strategy: qtable,
