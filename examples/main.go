@@ -5,13 +5,39 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/jessevdk/go-flags"
+	"github.com/lukemassa/go-coach/examples/deeplizard"
+	"github.com/lukemassa/go-coach/examples/frozenlake"
 	"github.com/lukemassa/go-coach/examples/konamicode"
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
+func getEnv(env string) coach.Environment {
+	if env == "konami" {
+		return konamicode.New()
+	}
+	if env == "frozen" {
+		return frozenlake.New()
+	}
+	if env == "deeplizard" {
+		return deeplizard.New()
+	}
+	panic(fmt.Sprintf("unexpected environment %s", env))
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	env := konamicode.New()
+
+	var opts struct {
+		// Example of a required flag
+		Environment string `short:"e" long:"environment" description:"Which environment" required:"true"`
+	}
+
+	_, err := flags.Parse(&opts)
+	if err != nil {
+		panic(err)
+	}
+	env := getEnv(opts.Environment)
 
 	player := coach.Train(env, 10000)
 
