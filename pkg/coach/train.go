@@ -147,9 +147,13 @@ func (p *Player) Play(env Environment) Reward {
 		steps += 1
 
 		preferredAction := p.strategy.Choose(state, 0)
+
 		fmt.Printf("Chose action %v on step %d\n", preferredAction, steps)
 		//fmt.Printf("Preferred action for state %v is %v\n", state, preferredAction)
 		newState, incrementalReward, isComplete := env.Evaluate(state, preferredAction)
+		if _, ok := p.strategy[newState]; !ok {
+			p.strategy[newState] = initialQRow(env.PossibleActions())
+		}
 		score += incrementalReward
 		state = newState
 
