@@ -39,7 +39,7 @@ func main() {
 	}
 	env := getEnv(opts.Environment)
 
-	player := coach.Train(env, 0)
+	player := coach.Train(env, 1000)
 
 	trials := 1
 

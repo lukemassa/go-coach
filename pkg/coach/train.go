@@ -71,7 +71,7 @@ func initialQRow(actions []Action) map[Action]QValue {
 func (q QTable) Update(state State, env Environment, learningRate, discountFactor float64) {
 	for action := range q[state] {
 
-		newState, reward, _ := env.Evaluate(state, action)
+		newState, reward, _ := q.evaluate(env, state, action)
 		// Passing epsilon as 0 to make sure we pick the value itself
 		if _, ok := q[newState]; !ok {
 			q[newState] = initialQRow(env.PossibleActions())
@@ -88,6 +88,7 @@ func (q QTable) Update(state State, env Environment, learningRate, discountFacto
 func Train(env Environment, episodes int) Player {
 
 	qtable := NewQTable()
+
 	possibleActions := env.PossibleActions()
 	// Fill in q state for initial state
 	initialState := env.InitialState()
@@ -113,13 +114,9 @@ func Train(env Environment, episodes int) Player {
 			qtable.Update(state, env, discountFactor, learningRate)
 			preferredAction := qtable.Choose(state, epsilon)
 
-			newState, _, isComplete := env.Evaluate(state, preferredAction)
+			newState, _, isComplete := qtable.evaluate(env, state, preferredAction)
 			state = newState
 
-			// Learn about new states, initialize the q state
-			if _, ok := qtable[state]; !ok {
-				qtable[state] = initialQRow(possibleActions)
-			}
 			//fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
 			if isComplete || steps > env.MaxSteps() {
 				//fmt.Printf("Steps %d\n", steps)
@@ -128,11 +125,21 @@ func Train(env Environment, episodes int) Player {
 		}
 
 	}
-	//fmt.Printf("%s\n", qtable)
+	fmt.Printf("%s\n", qtable)
 
 	return Player{
 		strategy: qtable,
 	}
+}
+
+// Slight wrapper around env.Evaluate() that allows us to fill in
+// a missing initial qrow
+func (q *QTable) evaluate(env Environment, state State, action Action) (State, Reward, bool) {
+	newState, incrementalReward, isComplete := env.Evaluate(state, action)
+	if _, ok := (*q)[newState]; !ok {
+		(*q)[newState] = initialQRow(env.PossibleActions())
+	}
+	return newState, incrementalReward, isComplete
 }
 
 // Play a single episode with a player, returning it score
@@ -150,10 +157,7 @@ func (p *Player) Play(env Environment) Reward {
 
 		fmt.Printf("Chose action %v on step %d\n", preferredAction, steps)
 		//fmt.Printf("Preferred action for state %v is %v\n", state, preferredAction)
-		newState, incrementalReward, isComplete := env.Evaluate(state, preferredAction)
-		if _, ok := p.strategy[newState]; !ok {
-			p.strategy[newState] = initialQRow(env.PossibleActions())
-		}
+		newState, incrementalReward, isComplete := p.strategy.evaluate(env, state, preferredAction)
 		score += incrementalReward
 		state = newState
 
