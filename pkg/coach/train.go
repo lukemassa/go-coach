@@ -74,7 +74,7 @@ func (q QTable) Update(state State, env Environment, learningRate, discountFacto
 		newState, reward, _ := env.Evaluate(state, action)
 		// Passing epsilon as 0 to make sure we pick the value itself
 		if _, ok := q[newState]; !ok {
-			q[newState] = initialQRow(env.PossibleActions(newState))
+			q[newState] = initialQRow(env.PossibleActions())
 		}
 		optimalFutureAction := q.Choose(newState, 0)
 		optimalFutureValue := float64(q[newState][optimalFutureAction])
@@ -88,10 +88,10 @@ func (q QTable) Update(state State, env Environment, learningRate, discountFacto
 func Train(env Environment, episodes int) Player {
 
 	qtable := NewQTable()
-
+	possibleActions := env.PossibleActions()
 	// Fill in q state for initial state
 	initialState := env.InitialState()
-	qtable[initialState] = initialQRow(env.PossibleActions(initialState))
+	qtable[initialState] = initialQRow(possibleActions)
 	fmt.Printf("Initial q state  %v\n", qtable)
 
 	learningRate := .9
@@ -118,7 +118,7 @@ func Train(env Environment, episodes int) Player {
 
 			// Learn about new states, initialize the q state
 			if _, ok := qtable[state]; !ok {
-				qtable[state] = initialQRow(env.PossibleActions(state))
+				qtable[state] = initialQRow(possibleActions)
 			}
 			//fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
 			if isComplete || steps > env.MaxSteps() {

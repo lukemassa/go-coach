@@ -14,7 +14,7 @@ type Environment interface {
 	// What does the environment look like
 	MaxSteps() int
 	InitialState() State
-	PossibleActions(State) []Action
+	PossibleActions() []Action
 
 	// Training
 	Evaluate(State, Action) (State, Reward, bool)

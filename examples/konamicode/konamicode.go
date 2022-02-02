@@ -74,7 +74,7 @@ func (k *KonamiCodeEnvironment) MaxSteps() int {
 	return 100
 }
 
-func (k *KonamiCodeEnvironment) PossibleActions(state coach.State) []coach.Action {
+func (k *KonamiCodeEnvironment) PossibleActions() []coach.Action {
 	actions := make([]coach.Action, len(k.allKeys))
 	for i, key := range k.allKeys {
 		actions[i] = key

@@ -107,28 +107,13 @@ func (k *DeepLizardEvironment) InitialState() coach.State {
 	return Tile(6) // Put the lizard in the bottom corner
 }
 
-func (k *DeepLizardEvironment) PossibleActions(currentState coach.State) []coach.Action {
-	actions := make([]coach.Action, 0)
-	state, ok := currentState.(Tile)
-	if !ok {
-		panic("State is not a tile")
+func (k *DeepLizardEvironment) PossibleActions() []coach.Action {
+	return []coach.Action{
+		Left,
+		Right,
+		Up,
+		Down,
 	}
-	x_coordinate := state % 3
-	y_coordinate := state / 3
-
-	if x_coordinate > 0 {
-		actions = append(actions, Left)
-	}
-	if x_coordinate < 2 {
-		actions = append(actions, Right)
-	}
-	if y_coordinate > 0 {
-		actions = append(actions, Up)
-	}
-	if y_coordinate < 2 {
-		actions = append(actions, Down)
-	}
-	return actions
 }
 
 func (k *DeepLizardEvironment) MaxSteps() int {
@@ -154,26 +139,27 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 	}
 	x_coordinate := state % 3
 	y_coordinate := state / 3
+	// Don't move if on an edge
 	switch direction {
 	case Up:
 		y_coordinate--
 		if y_coordinate < 0 {
-			panic("Moved up when on top row")
+			y_coordinate = 0
 		}
 	case Down:
 		y_coordinate++
 		if y_coordinate > 2 {
-			panic("Moved down when on bottom row")
+			y_coordinate = 2
 		}
 	case Left:
 		x_coordinate--
 		if x_coordinate < 0 {
-			panic("Moved left when on leftmost column")
+			x_coordinate = 0
 		}
 	case Right:
 		x_coordinate++
 		if x_coordinate > 2 {
-			panic("Moved right when on rightmost column")
+			x_coordinate = 2
 		}
 	}
 	newState := Tile(y_coordinate*3 + x_coordinate)

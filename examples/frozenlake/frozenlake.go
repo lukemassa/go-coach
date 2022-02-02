@@ -14,6 +14,7 @@ type Tile int
 type Direction int
 
 const tials = 16
+const dimension = 4
 
 /*
 c = one cricket, +1
@@ -109,28 +110,13 @@ func (f *FrozenHoleEnvironment) InitialState() coach.State {
 	return Tile(0) // Put the lizard in the bottom corner
 }
 
-func (f *FrozenHoleEnvironment) PossibleActions(currentState coach.State) []coach.Action {
-	actions := make([]coach.Action, 0)
-	state, ok := currentState.(Tile)
-	if !ok {
-		panic("State is not a tile")
+func (f *FrozenHoleEnvironment) PossibleActions() []coach.Action {
+	return []coach.Action{
+		Left,
+		Right,
+		Up,
+		Down,
 	}
-	x_coordinate := state % 4
-	y_coordinate := state / 4
-
-	if x_coordinate > 0 {
-		actions = append(actions, Left)
-	}
-	if x_coordinate < 3 {
-		actions = append(actions, Right)
-	}
-	if y_coordinate > 0 {
-		actions = append(actions, Up)
-	}
-	if y_coordinate < 3 {
-		actions = append(actions, Down)
-	}
-	return actions
 }
 
 func (f *FrozenHoleEnvironment) MaxSteps() int {
@@ -146,31 +132,31 @@ func (f *FrozenHoleEnvironment) Evaluate(currentState coach.State, action coach.
 	if !ok {
 		panic("Action is not a direction")
 	}
-	x_coordinate := state % 4
-	y_coordinate := state / 4
+	x_coordinate := state % dimension
+	y_coordinate := state / dimension
 	switch direction {
 	case Up:
 		y_coordinate--
 		if y_coordinate < 0 {
-			panic("Moved up when on top row")
+			y_coordinate = 0
 		}
 	case Down:
 		y_coordinate++
-		if y_coordinate > 3 {
-			panic("Moved down when on bottom row")
+		if y_coordinate > dimension-1 {
+			y_coordinate = dimension - 1
 		}
 	case Left:
 		x_coordinate--
 		if x_coordinate < 0 {
-			panic("Moved left when on leftmost column")
+			x_coordinate = 0
 		}
 	case Right:
 		x_coordinate++
-		if x_coordinate > 3 {
-			panic("Moved right when on rightmost column")
+		if x_coordinate > dimension-1 {
+			x_coordinate = dimension - 1
 		}
 	}
-	newState := Tile(y_coordinate*4 + x_coordinate)
+	newState := Tile(y_coordinate*dimension + x_coordinate)
 	//.Printf("Action %v moves from %v to %v\n", action, currentState, newState)
 	reward := f.rewards[f.board[newState]]
 	return coach.State(newState), coach.Reward(reward.reward), reward.terminal
