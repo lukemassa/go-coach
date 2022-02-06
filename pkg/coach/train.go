@@ -153,7 +153,7 @@ func (p *Player) Play(env Environment) ([]State, Reward) {
 
 	states := make([]State, 1)
 	states[0] = state
-	//maxSteps := env.MaxSteps()
+	maxSteps := env.MaxSteps()
 	steps := 0
 	for {
 		steps += 1
@@ -169,7 +169,7 @@ func (p *Player) Play(env Environment) ([]State, Reward) {
 		state = newState
 		states = append(states, state)
 
-		if isComplete {
+		if isComplete || steps > maxSteps {
 			break
 		}
 	}
