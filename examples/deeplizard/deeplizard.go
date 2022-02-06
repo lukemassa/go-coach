@@ -124,14 +124,6 @@ func (k *DeepLizardEvironment) MaxSteps() int {
 	return 100
 }
 
-func (k *DeepLizardEvironment) PossibleStates() []coach.State {
-	states := make([]coach.State, tials)
-	for i := 0; i < tials; i++ {
-		states[i] = Tile(i)
-	}
-	return states
-}
-
 func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.Action) (coach.State, coach.Reward, bool) {
 	state, ok := currentState.(Tile)
 	if !ok {

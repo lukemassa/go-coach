@@ -105,7 +105,7 @@ func Train(env Environment, episodes int) Player {
 		if i%1000 == 0 {
 			fmt.Printf("Learning rate on episode %d is now %f\n", i, learningRate)
 		}
-
+		env.Update()
 		state := env.InitialState()
 
 		for steps := 0; ; steps++ {
@@ -115,9 +115,10 @@ func Train(env Environment, episodes int) Player {
 			preferredAction := qtable.Choose(state, epsilon)
 
 			newState, _, isComplete := qtable.evaluate(env, state, preferredAction)
+			//fmt.Printf("Chose action %v for state %v brought us to %v\n", preferredAction, state, newState)
+
 			state = newState
 
-			//fmt.Printf("Chose action %v for state %v\n", preferredAction, state)
 			if isComplete || steps > env.MaxSteps() {
 				//fmt.Printf("Steps %d\n", steps)
 				break
@@ -125,7 +126,7 @@ func Train(env Environment, episodes int) Player {
 		}
 
 	}
-	//fmt.Printf("%s\n", qtable)
+	fmt.Printf("%s\n", qtable)
 
 	return Player{
 		strategy: qtable,
@@ -162,6 +163,8 @@ func (p *Player) Play(env Environment) ([]State, Reward) {
 		//fmt.Printf("Chose action %v on step %d\n", preferredAction, steps)
 		//fmt.Printf("Preferred action for state %v is %v\n", state, preferredAction)
 		newState, incrementalReward, isComplete := p.strategy.evaluate(env, state, preferredAction)
+		fmt.Printf("Chose action %v for state %v brought us to %v\n", preferredAction, state, newState)
+
 		score += incrementalReward
 		state = newState
 		states = append(states, state)
@@ -179,10 +182,10 @@ func (p *Player) Evaluate(env Environment, episodes int) Score {
 	for i := 0; i < episodes; i++ {
 		env.Update()
 		states, _ := p.Play(env)
-		env.Show(states, false)
+		//env.Show(states, false)
 		score := env.Score(states)
 		total += score
-		//fmt.Printf("Finished one round, scored: %f\n", score)
+		fmt.Printf("Finished one round, scored: %f\n", score)
 	}
 	return total / Score(episodes)
 }

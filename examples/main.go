@@ -9,6 +9,7 @@ import (
 	"github.com/lukemassa/go-coach/examples/deeplizard"
 	"github.com/lukemassa/go-coach/examples/frozenlake"
 	"github.com/lukemassa/go-coach/examples/konamicode"
+	"github.com/lukemassa/go-coach/examples/wordle"
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
@@ -21,6 +22,9 @@ func getEnv(env string) coach.Environment {
 	}
 	if env == "deeplizard" {
 		return deeplizard.New()
+	}
+	if env == "wordle" {
+		return wordle.New()
 	}
 	panic(fmt.Sprintf("unexpected environment %s", env))
 }
