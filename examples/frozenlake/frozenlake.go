@@ -6,6 +6,9 @@ https://gym.openai.com/envs/FrozenLake-v0/
 package frozenlake
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
@@ -15,17 +18,6 @@ type Direction int
 
 const tials = 16
 const dimension = 4
-
-/*
-c = one cricket, +1
-C = 5 crickets, +10 (and game over)
-B = Bird, -10 (and game over)
-s = start
-Empty squares are -1
-    | c |   |   |
-	|   | B |   |
-    | s |   | C |
-*/
 
 const (
 	Frozen TileType = iota
@@ -179,4 +171,55 @@ func (f *FrozenHoleEnvironment) Score(states []coach.State) coach.Score {
 		panic("Last state is not terminal!")
 	}
 	return coach.Score(reward.reward)
+}
+
+func showStrBoard(strBoard [tials]string) {
+	for i := 0; i < dimension; i++ {
+		for j := 0; j < dimension; j++ {
+
+			fmt.Print(strBoard[i*dimension+j])
+		}
+		fmt.Println()
+	}
+}
+
+func (f *FrozenHoleEnvironment) Show(states []coach.State, interactive bool) {
+	strBoard := [tials]string{}
+	for i := 0; i < tials; i++ {
+		var tialStr string
+		switch f.board[i] {
+		case Frozen:
+			tialStr = " "
+		case Hole:
+			tialStr = "o"
+		case Goal:
+			tialStr = "g"
+		}
+		strBoard[i] = tialStr
+
+	}
+	for i := 0; i < len(states); i++ {
+
+		tialStr := strconv.Itoa(i)
+
+		if i >= 10 {
+			tialStr = "*"
+		}
+		tile, ok := states[i].(Tile)
+		if !ok {
+			panic("State is not a tile")
+		}
+		strBoard[tile] = tialStr
+		if interactive {
+			fmt.Print("\033[H\033[2J")
+			showStrBoard(strBoard)
+			fmt.Scanln()
+		}
+	}
+	if interactive {
+		fmt.Printf("Finished! Score: %f", f.Score(states))
+		fmt.Scanln()
+	} else {
+		showStrBoard(strBoard)
+	}
 }

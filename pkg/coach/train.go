@@ -147,10 +147,11 @@ func (q *QTable) evaluate(env Environment, state State, action Action) (State, R
 // Rely entirely on what you have "learned"
 func (p *Player) Play(env Environment) ([]State, Reward) {
 
-	//env.Reset()
 	var score Reward
-	states := make([]State, 0)
 	state := env.InitialState()
+
+	states := make([]State, 1)
+	states[0] = state
 	//maxSteps := env.MaxSteps()
 	steps := 0
 	for {
@@ -158,7 +159,7 @@ func (p *Player) Play(env Environment) ([]State, Reward) {
 
 		preferredAction := p.strategy.Choose(state, 0)
 
-		fmt.Printf("Chose action %v on step %d\n", preferredAction, steps)
+		//fmt.Printf("Chose action %v on step %d\n", preferredAction, steps)
 		//fmt.Printf("Preferred action for state %v is %v\n", state, preferredAction)
 		newState, incrementalReward, isComplete := p.strategy.evaluate(env, state, preferredAction)
 		score += incrementalReward
@@ -178,8 +179,10 @@ func (p *Player) Evaluate(env Environment, episodes int) Score {
 	for i := 0; i < episodes; i++ {
 		env.Update()
 		states, _ := p.Play(env)
+		env.Show(states, false)
 		score := env.Score(states)
 		total += score
+		//fmt.Printf("Finished one round, scored: %f\n", score)
 	}
 	return total / Score(episodes)
 }

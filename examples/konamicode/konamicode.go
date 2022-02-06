@@ -62,7 +62,7 @@ func New() *KonamiCodeEnvironment {
 			LeftKey,
 			RightKey,
 			AKey,
-			BKey,
+			//	BKey,
 		},
 	}
 	ret := &k
@@ -109,9 +109,9 @@ func (k *KonamiCodeEnvironment) Evaluate(currentState coach.State, action coach.
 		currentGame[8],
 	})
 	reward := currentRun(newGame)
-	if reward > 9 {
-		fmt.Printf("Got reward %v for %v\n", reward, newGame)
-	}
+	//if reward > 9 {
+	//	fmt.Printf("Got reward %v for %v\n", reward, newGame)
+	//}
 
 	return newGame, coach.Reward(reward), reward == codeLength
 }
@@ -126,8 +126,10 @@ func currentRun(game GameState) int {
 		RightKey,
 		LeftKey,
 		RightKey,
-		AKey,
-		BKey,
+		//AKey,
+		//BKey,
+		UpKey,
+		DownKey,
 	}
 	//fmt.Printf("Looking for matches in %v\n", game)
 	for i := codeLength - 1; i >= 0; i-- {
@@ -156,4 +158,16 @@ func (k *KonamiCodeEnvironment) Update() {
 func (k *KonamiCodeEnvironment) Score(states []coach.State) coach.Score {
 	// How well you did is merely how many buttons you had to press
 	return coach.Score(len(states))
+}
+
+func (k *KonamiCodeEnvironment) Show(states []coach.State, interactive bool) {
+	for i := 0; i < len(states); i++ {
+		currentGame, ok := states[i].(GameState)
+		if !ok {
+			panic("State is not a game")
+		}
+		// Last pressed key is in position 0
+		fmt.Printf("%v", currentGame[0])
+	}
+	fmt.Println()
 }

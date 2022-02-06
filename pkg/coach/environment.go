@@ -13,11 +13,14 @@ type Score float64
 // any code interacting with the environment to keep track of
 // which state the agent is in.
 type Environment interface {
-	// What does the environment look like
-	MaxSteps() int
-	InitialState() State
-	PossibleActions() []Action
+	// What does the environment look like/how does it behave?
 
+	// How many steps before we decide to end an episode
+	MaxSteps() int
+	// What is the initial state of environment
+	InitialState() State
+	// What actions can be taken from any state
+	PossibleActions() []Action
 	// Some environments may need to change *between*
 	// episodes. For example, wordle has a new "goal"
 	// for each episode, but the rest of the environment
@@ -26,11 +29,16 @@ type Environment interface {
 	Update()
 
 	// Training
+
 	// Given a state and an action, which state will this bring
 	// us to, how much reward do we get there, and is it a terminal state
 	Evaluate(State, Action) (State, Reward, bool)
 
 	// Validation
+
+	// Show the states in order, optionally "interactively"
+	// which allows the user to "walk through" states one at a tiime
+	Show([]State, bool)
 	// How "well" did a player do that produced this particular
 	// stream of states. Assume that the first state is the iniitial
 	// state and the last state is a terminal one

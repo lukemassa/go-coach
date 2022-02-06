@@ -6,6 +6,9 @@ A simple game where a lizard walks around a board and tries to find crickets to 
 package deeplizard
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/lukemassa/go-coach/pkg/coach"
 )
 
@@ -13,6 +16,7 @@ type TileType int
 type Tile int
 type Direction int
 
+const dimension = 3
 const tials = 9
 
 /*
@@ -137,8 +141,8 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 	if !ok {
 		panic("Action is not a direction")
 	}
-	x_coordinate := state % 3
-	y_coordinate := state / 3
+	x_coordinate := state % dimension
+	y_coordinate := state / dimension
 	// Don't move if on an edge
 	switch direction {
 	case Up:
@@ -148,8 +152,8 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 		}
 	case Down:
 		y_coordinate++
-		if y_coordinate > 2 {
-			y_coordinate = 2
+		if y_coordinate > dimension-1 {
+			y_coordinate = dimension - 1
 		}
 	case Left:
 		x_coordinate--
@@ -158,11 +162,11 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 		}
 	case Right:
 		x_coordinate++
-		if x_coordinate > 2 {
-			x_coordinate = 2
+		if x_coordinate > dimension-1 {
+			x_coordinate = dimension - 1
 		}
 	}
-	newState := Tile(y_coordinate*3 + x_coordinate)
+	newState := Tile(y_coordinate*dimension + x_coordinate)
 	//.Printf("Action %v moves from %v to %v\n", action, currentState, newState)
 	reward := k.rewards[k.board[newState]]
 	return coach.State(newState), coach.Reward(reward.reward), reward.terminal
@@ -184,4 +188,56 @@ func (k *DeepLizardEvironment) Score(states []coach.State) coach.Score {
 		score += coach.Score(k.rewards[k.board[tile]].reward)
 	}
 	return score
+}
+
+func showStrBoard(strBoard [tials]string) {
+	for i := 0; i < dimension; i++ {
+		for j := 0; j < dimension; j++ {
+
+			fmt.Print(strBoard[i*dimension+j])
+		}
+		fmt.Println()
+	}
+}
+
+func (k *DeepLizardEvironment) Show(states []coach.State, interactive bool) {
+	strBoard := [tials]string{}
+	for i := 0; i < tials; i++ {
+		var tialStr string
+		switch k.board[i] {
+		case Empty:
+			tialStr = " "
+		case OneCricket:
+			tialStr = "c"
+		case FiveCricket:
+			tialStr = "C"
+		case Bird:
+			tialStr = "B"
+		}
+		strBoard[i] = tialStr
+	}
+	for i := 0; i < len(states); i++ {
+
+		tialStr := strconv.Itoa(i)
+
+		if i >= 10 {
+			tialStr = "*"
+		}
+		tile, ok := states[i].(Tile)
+		if !ok {
+			panic("State is not a tile")
+		}
+		strBoard[tile] = tialStr
+		if interactive {
+			fmt.Print("\033[H\033[2J")
+			showStrBoard(strBoard)
+			fmt.Scanln()
+		}
+	}
+	if interactive {
+		fmt.Printf("Finished! Score: %f", k.Score(states))
+		fmt.Scanln()
+	} else {
+		showStrBoard(strBoard)
+	}
 }

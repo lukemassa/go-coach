@@ -39,10 +39,10 @@ func main() {
 	}
 	env := getEnv(opts.Environment)
 
-	player := coach.Train(env, 10000)
+	player := coach.Train(env, 100_000)
 
 	trials := 10
-
+	fmt.Println("Done training, starting trials")
 	start := time.Now()
 	score := player.Evaluate(env, trials)
 	duration := time.Since(start)
