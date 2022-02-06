@@ -148,3 +148,12 @@ func currentRun(game GameState) int {
 	return 0
 
 }
+
+func (k *KonamiCodeEnvironment) Update() {
+	// Nothing to do between runs
+}
+
+func (k *KonamiCodeEnvironment) Score(states []coach.State) coach.Score {
+	// How well you did is merely how many buttons you had to press
+	return coach.Score(len(states))
+}

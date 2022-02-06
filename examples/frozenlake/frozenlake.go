@@ -162,3 +162,21 @@ func (f *FrozenHoleEnvironment) Evaluate(currentState coach.State, action coach.
 	return coach.State(newState), coach.Reward(reward.reward), reward.terminal
 
 }
+
+func (f *FrozenHoleEnvironment) Update() {
+	// Nothing to do between runs
+}
+
+func (f *FrozenHoleEnvironment) Score(states []coach.State) coach.Score {
+	// How well you did is merely whether you fell into a hole or not
+	lastState := states[len(states)-1]
+	tile, ok := lastState.(Tile)
+	if !ok {
+		panic("State is not a tile")
+	}
+	reward := f.rewards[f.board[tile]]
+	if !reward.terminal {
+		panic("Last state is not terminal!")
+	}
+	return coach.Score(reward.reward)
+}

@@ -168,3 +168,20 @@ func (k *DeepLizardEvironment) Evaluate(currentState coach.State, action coach.A
 	return coach.State(newState), coach.Reward(reward.reward), reward.terminal
 
 }
+
+func (k *DeepLizardEvironment) Update() {
+	// Nothing to do between runs
+}
+
+func (k *DeepLizardEvironment) Score(states []coach.State) coach.Score {
+	// How well you did is identical to the sum of rewards gathered during the game
+	var score coach.Score
+	for i := 0; i < len(states); i++ {
+		tile, ok := states[i].(Tile)
+		if !ok {
+			panic("State is not a tile")
+		}
+		score += coach.Score(k.rewards[k.board[tile]].reward)
+	}
+	return score
+}

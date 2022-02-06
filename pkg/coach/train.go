@@ -125,7 +125,7 @@ func Train(env Environment, episodes int) Player {
 		}
 
 	}
-	fmt.Printf("%s\n", qtable)
+	//fmt.Printf("%s\n", qtable)
 
 	return Player{
 		strategy: qtable,
@@ -142,11 +142,14 @@ func (q *QTable) evaluate(env Environment, state State, action Action) (State, R
 	return newState, incrementalReward, isComplete
 }
 
-// Play a single episode with a player, returning it score
-func (p *Player) Play(env Environment) Reward {
+// Play a single episode with a player, returning which states
+// it walked through to get to the end and returning its cumulative score
+// Rely entirely on what you have "learned"
+func (p *Player) Play(env Environment) ([]State, Reward) {
 
 	//env.Reset()
 	var score Reward
+	states := make([]State, 0)
 	state := env.InitialState()
 	//maxSteps := env.MaxSteps()
 	steps := 0
@@ -160,19 +163,23 @@ func (p *Player) Play(env Environment) Reward {
 		newState, incrementalReward, isComplete := p.strategy.evaluate(env, state, preferredAction)
 		score += incrementalReward
 		state = newState
+		states = append(states, state)
 
 		if isComplete {
 			break
 		}
 	}
 
-	return score
+	return states, score
 }
 
-func (p *Player) Evaluate(env Environment, episodes int) Reward {
-	var total Reward
+func (p *Player) Evaluate(env Environment, episodes int) Score {
+	var total Score
 	for i := 0; i < episodes; i++ {
-		total += p.Play(env)
+		env.Update()
+		states, _ := p.Play(env)
+		score := env.Score(states)
+		total += score
 	}
-	return total / Reward(episodes)
+	return total / Score(episodes)
 }
