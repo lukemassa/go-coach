@@ -38,7 +38,7 @@ func (w word) String() string {
 }
 
 func (g gameState) String() string {
-	return fmt.Sprintf("Correct letters: %s", g.correctLetters)
+	return fmt.Sprintf("Previous guess %s, Correct letters: %s", g.previousWord, g.correctLetters)
 }
 
 func getEnglishLetters() [numLetters]rune {
@@ -101,13 +101,11 @@ func (w *WordleEnvironment) Evaluate(currentState coach.State, action coach.Acti
 		panic("State is not a gameState")
 	}
 	newWord, ok := action.(word)
-	if gameState.previousWord == newWord {
-		return coach.State(gameState), -10, false
+	if !ok {
+		panic("Action is not a word")
 	}
 	gameState.previousWord = newWord
-	if !ok {
-		panic("Action is not a direction")
-	}
+
 	correctLetters := 0
 	for i := 0; i < numLetters; i++ {
 		if newWord[i] == w.targetWord[i] {
